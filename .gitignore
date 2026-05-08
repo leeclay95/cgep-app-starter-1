@@ -13,3 +13,4 @@ to_delete_markers.json
 .DS_Store
 Thumbs.dbprogress/
 report.sh
+AUDIT_REPORT.md
