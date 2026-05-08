@@ -83,7 +83,7 @@ jobs:
             --all-namespaces \
             --output json > ${{ github.workspace }}/evidence/conftest-results.json || true
 
-          # 2. Run the EXACT Python logic from your local terminal
+          
           python3 -c "
           import json, sys, os
           path = '${{ github.workspace }}/evidence/conftest-results.json'
