@@ -455,7 +455,7 @@ resource "aws_iam_role_policy" "lambda_inline" {
         # GAP-07 / [FIX-RESULT1]: scoped to only the actions required.
         # DynamoDB: only PutItem (write submissions) + DescribeTable (health check).
         Effect   = "Allow"
-        Action   = ["dynamodb:*"] # VIOLATION: triggers enforce_least_privilege.rego #4
+        Action   = ["dynamodb:PutItem", "dynamodb:DescribeTable"] # VIOLATION: triggers enforce_least_privilege.rego #4 fixed.
         Resource = aws_dynamodb_table.intake.arn
       },
       {
