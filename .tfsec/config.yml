@@ -1,20 +1,8 @@
-# tfsec configuration — Acme Health Patient Intake API
-#
-# Excluded checks:
-#
-# aws-iam-no-policy-wildcards (AVD-AWS-0057):
-#   Two justified false-positives in terraform/main.tf:
-#
-#   1. logs:CreateLogStream scoped to ${log_group_arn}:log-stream:*
-#      CloudWatch Logs generates stream names at runtime. The :log-stream:*
-#      suffix is the minimum viable scope — stream names cannot be
-#      pre-specified. CMMC AU.L2-3.3.1 requires this logging path.
-#
-#   2. s3:PutObject scoped to ${uploads_bucket_arn}/uploads/*
-#      This is a prefix-restricted resource, not a true wildcard. The
-#      /uploads/* suffix constrains writes to that prefix only. tfsec
-#      flags any trailing * regardless of prefix specificity. This is
-#      the tightest possible scope without hardcoding runtime object keys.
-#      CMMC SC.L2-3.13.11 requires the S3 write path for PHI uploads.
-exclude:
-  - aws-iam-no-policy-wildcards
+exclude_results:
+  - code: aws-iam-no-policy-wildcards
+    where:
+      resource: "aws_iam_role_policy.vpc_flow_logs"
+
+  - code: aws-iam-no-policy-wildcards
+    where:
+      resource: "aws_iam_role_policy.lambda_inline"
