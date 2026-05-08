@@ -1,17 +1,8 @@
-# Terraform
 .terraform/
-.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
+.terraform.lock.hcl
 *.tfvars
-!terraform.tfvars.example
 tfplan
-*.tfplan
-crash.log
-
-# Lambda build
-terraform/lambda/handler.zip
-
-# Local
-evidence/
-.DS_Store
+to_delete.json
+to_delete_markers.json

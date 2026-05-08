@@ -1,0 +1,148 @@
+# .github/workflows/grc-gate.yml
+name: grc-gate
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  grc-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect Changes & Set Working Dir
+        id: context
+        run: |
+          # Find the directory of the first modified .tf file
+          # If no .tf files changed (like just a README update), default to the 'terraform' folder
+          CHANGED_DIR=$(git diff --name-only origin/main...HEAD | grep '\.tf$' | head -n 1 | xargs -I {} dirname {} || echo "terraform")
+          echo "TF_WORKING_DIR=$CHANGED_DIR" >> $GITHUB_ENV
+          echo "Target Directory: $CHANGED_DIR"
+          mkdir -p evidence # Create evidence at the root early
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+          terraform_wrapper: false
+
+      - name: Install Conftest
+        run: |
+          curl -fsSL https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz \
+            | tar -xz -C /usr/local/bin conftest
+
+      - name: Install tfsec
+        run: |
+          curl -fsSL https://github.com/aquasecurity/tfsec/releases/download/v1.28.14/tfsec-linux-amd64 \
+            -o /usr/local/bin/tfsec && chmod +x /usr/local/bin/tfsec
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.2.4'
+
+      - name: Terraform plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init -input=false
+          terraform validate
+          terraform plan -out=tfplan -var="project_name=cgep-lab" -no-color | tee plan.txt
+          terraform show -json tfplan > plan.json
+
+      - name: Conftest policy gate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/evidence
+          conftest test plan.json --policy $GITHUB_WORKSPACE/policies --output json > $GITHUB_WORKSPACE/evidence/conftest-results.json || true
+          
+          python3 -c "
+          import json, sys, os
+          path = '$GITHUB_WORKSPACE/evidence/conftest-results.json'
+          if not os.path.exists(path) or os.stat(path).st_size == 0:
+              print('No evidence found'); sys.exit(0)
+          with open(path) as f:
+              data = json.load(f)
+              # Standardize nested conftest output
+              results = data if isinstance(data[0], dict) else [item for sublist in data for item in sublist]
+              fails = sum(len(r.get('failures') or []) for r in results)
+          print(f'conftest failures: {fails}')
+          sys.exit(0 if fails == 0 else 1)
+          "
+
+      - name: tfsec scan
+        if: always()
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          # Use absolute workspace path for config and output
+          tfsec . --config-file $GITHUB_WORKSPACE/.tfsec/config.yml --format sarif --out $GITHUB_WORKSPACE/evidence/tfsec.sarif || true
+          
+          python3 -c "
+          import json, sys
+          d = json.load(open('$GITHUB_WORKSPACE/evidence/tfsec.sarif'))
+          high = sum(1 for run in d.get('runs', []) for r in run.get('results', []) if (r.get('level') or '').lower() in ('error','critical','high'))
+          print(f'tfsec high+critical: {high}')
+          sys.exit(0 if high == 0 else 1)
+          "
+
+      - name: Copy plan into evidence
+        if: always()
+        run: |
+          mkdir -p evidence
+          cp ${{ env.TF_WORKING_DIR }}/plan.json evidence/plan.json
+          cp ${{ env.TF_WORKING_DIR }}/plan.txt  evidence/plan.txt
+
+      - name: Upload evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grc-evidence-${{ github.run_id }}
+          path: evidence/
+          retention-days: 90
+
+      - name: Bundle + sign + upload to vault
+        id: sign
+        if: always()
+        env:
+          VAULT: ${{ vars.EVIDENCE_VAULT }}
+          RUN_ID: ${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          BUNDLE="evidence-${RUN_ID}-${SHA}.tar.gz"
+          ( cd evidence && tar czf "../${BUNDLE}" . )
+          shasum -a 256 "${BUNDLE}" | awk '{print $1}' > "${BUNDLE}.sha256"
+
+          # Keyless signing via GitHub OIDC
+          cosign sign-blob --yes --bundle "${BUNDLE}.sig.bundle" "${BUNDLE}"
+
+          KEY_PREFIX="runs/${RUN_ID}"
+          aws s3 cp "${BUNDLE}"             "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}"
+          aws s3 cp "${BUNDLE}.sha256"      "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sha256"
+          aws s3 cp "${BUNDLE}.sig.bundle"  "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sig.bundle"
+
+          VERSION_ID=$(aws s3api head-object --bucket "${VAULT}" --key "${KEY_PREFIX}/${BUNDLE}" --query VersionId --output text)
+          cat > receipt.json <<EOF
+          {
+            "run_id":"${RUN_ID}",
+            "vault":"${VAULT}",
+            "bundle_key":"${KEY_PREFIX}/${BUNDLE}",
+            "version_id":"${VERSION_ID}",
+            "sha256":"$(cat ${BUNDLE}.sha256)",
+            "commit":"${SHA}"
+          }
+          EOF
+          aws s3 cp receipt.json "s3://${VAULT}/${KEY_PREFIX}/receipt.json" 
