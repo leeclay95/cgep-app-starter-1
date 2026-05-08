@@ -11,4 +11,5 @@ to_delete_markers.json
 
 # OS
 .DS_Store
-Thumbs.db
+Thumbs.dbprogress/
+report.sh

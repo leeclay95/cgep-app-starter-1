@@ -1,0 +1,16 @@
+{
+  "profile": {
+    "uuid": "720bd4d7-74de-4879-9847-c6c8de8676d3",
+    "metadata": {
+      "title": "Generic profile created by trestle named cmmc-level-2.",
+      "last-modified": "2026-05-08T09:08:17.545998-06:00",
+      "version": "0.0.0",
+      "oscal-version": "1.2.1"
+    },
+    "imports": [
+      {
+        "include-all": {}
+      }
+    ]
+  }
+}
