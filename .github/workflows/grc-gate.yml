@@ -21,12 +21,9 @@ jobs:
       - name: Detect Changes & Set Working Dir
         id: context
         run: |
-          # Find the directory of the first modified .tf file
-          # If no .tf files changed (like just a README update), default to the 'terraform' folder
-          CHANGED_DIR=$(git diff --name-only origin/main...HEAD | grep '\.tf$' | head -n 1 | xargs -I {} dirname {} || echo "terraform")
-          echo "TF_WORKING_DIR=$CHANGED_DIR" >> $GITHUB_ENV
-          echo "Target Directory: $CHANGED_DIR"
-          mkdir -p evidence # Create evidence at the root early
+          echo "TF_WORKING_DIR=terraform" >> $GITHUB_ENV
+          echo "Target Directory: terraform"
+          mkdir -p evidence
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
