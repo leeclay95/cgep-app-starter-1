@@ -310,7 +310,8 @@ resource "aws_s3_bucket_logging" "uploads" {
 }
 
 # GAP-03: Deny all non-TLS requests to the uploads bucket.
-resource "aws_s3_bucket_policy" "uploads_tls_only" {
+
+resource "aws_s3_bucket_policy" "uploads_combined" {
   bucket = aws_s3_bucket.uploads.id
   policy = jsonencode({
     Version = "2012-10-17"
@@ -320,9 +321,42 @@ resource "aws_s3_bucket_policy" "uploads_tls_only" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource = [
+        Resource  = [
           aws_s3_bucket.uploads.arn,
-          "${aws_s3_bucket.uploads.arn}/*"
+          "${aws_s3_bucket.uploads.arn}/*",
+        ]
+        Condition = {
+          Bool = { "aws:SecureTransport" = "false" }
+        }
+      }
+    ]
+  })
+}
+
+# Logs bucket — your logs_combined is correct, no change needed
+resource "aws_s3_bucket_policy" "logs_combined" {
+  bucket = aws_s3_bucket.logs.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowS3LogDelivery"
+        Effect = "Allow"
+        Principal = { Service = "logging.s3.amazonaws.com" }
+        Action   = ["s3:PutObject"]
+        Resource = "${aws_s3_bucket.logs.arn}/uploads-access-logs/*"
+        Condition = {
+          ArnLike = { "aws:SourceArn" = aws_s3_bucket.uploads.arn }
+        }
+      },
+      {
+        Sid       = "EnforceTLS"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource  = [
+          aws_s3_bucket.logs.arn,
+          "${aws_s3_bucket.logs.arn}/*",
         ]
         Condition = {
           Bool = { "aws:SecureTransport" = "false" }
