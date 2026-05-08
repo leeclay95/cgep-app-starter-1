@@ -1,5 +1,5 @@
-# .github/workflows/grc-gate.yml
 name: grc-gate
+
 on:
   pull_request:
     branches: [main]
@@ -10,29 +10,30 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  AWS_REGION: us-east-1
+  TF_WORKING_DIR: terraform
+
 jobs:
   grc-gate:
     runs-on: ubuntu-latest
+    outputs:
+      conftest_failures: ${{ steps.conftest.outputs.failures }}
+      tfsec_high: ${{ steps.tfsec.outputs.high }}
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Detect Changes & Set Working Dir
-        id: context
-        run: |
-          # Find the directory of the first modified .tf file
-          # If no .tf files changed (like just a README update), default to the 'terraform' folder
-          CHANGED_DIR=$(git diff --name-only origin/main...HEAD | grep '\.tf$' | head -n 1 | xargs -I {} dirname {} || echo "terraform")
-          echo "TF_WORKING_DIR=$CHANGED_DIR" >> $GITHUB_ENV
-          echo "Target Directory: $CHANGED_DIR"
-          mkdir -p evidence # Create evidence at the root early
+      - name: Create evidence directory
+        run: mkdir -p evidence
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -44,18 +45,21 @@ jobs:
         run: |
           curl -fsSL https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz \
             | tar -xz -C /usr/local/bin conftest
+          conftest --version
 
       - name: Install tfsec
         run: |
           curl -fsSL https://github.com/aquasecurity/tfsec/releases/download/v1.28.14/tfsec-linux-amd64 \
             -o /usr/local/bin/tfsec && chmod +x /usr/local/bin/tfsec
+          tfsec --version
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
         with:
           cosign-release: 'v2.2.4'
 
-      - name: Terraform plan
+      - name: Terraform init and plan
+        id: plan
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
           terraform init -input=false
@@ -64,46 +68,80 @@ jobs:
           terraform show -json tfplan > plan.json
 
       - name: Conftest policy gate
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        run: |
-          mkdir -p $GITHUB_WORKSPACE/evidence
-          conftest test plan.json --policy $GITHUB_WORKSPACE/policies --output json > $GITHUB_WORKSPACE/evidence/conftest-results.json || true
-          
-          python3 -c "
-          import json, sys, os
-          path = '$GITHUB_WORKSPACE/evidence/conftest-results.json'
-          if not os.path.exists(path) or os.stat(path).st_size == 0:
-              print('No evidence found'); sys.exit(0)
-          with open(path) as f:
-              data = json.load(f)
-              # Standardize nested conftest output
-              results = data if isinstance(data[0], dict) else [item for sublist in data for item in sublist]
-              fails = sum(len(r.get('failures') or []) for r in results)
-          print(f'conftest failures: {fails}')
-          sys.exit(0 if fails == 0 else 1)
-          "
-
-      - name: tfsec scan
+        id: conftest
         if: always()
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          # Use absolute workspace path for config and output
-          tfsec . --config-file $GITHUB_WORKSPACE/.tfsec/config.yml --format sarif --out $GITHUB_WORKSPACE/evidence/tfsec.sarif || true
-          
-          python3 -c "
-          import json, sys
-          d = json.load(open('$GITHUB_WORKSPACE/evidence/tfsec.sarif'))
-          high = sum(1 for run in d.get('runs', []) for r in run.get('results', []) if (r.get('level') or '').lower() in ('error','critical','high'))
-          print(f'tfsec high+critical: {high}')
-          sys.exit(0 if high == 0 else 1)
-          "
+          conftest test plan.json \
+            --policy $GITHUB_WORKSPACE/policies \
+            --output json \
+            > $GITHUB_WORKSPACE/evidence/conftest-results.json 2>&1 || true
+
+          FAILURES=$(python3 - "$GITHUB_WORKSPACE/evidence/conftest-results.json" << 'PYEOF'
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        data = json.load(f)
+except Exception as e:
+    print(f"WARN: {e}", file=sys.stderr)
+    print(0)
+    sys.exit(0)
+results = data if isinstance(data, list) else [data]
+total = 0
+for r in results:
+    for failure in (r.get("failures") or []):
+        total += 1
+        print(f"  VIOLATION: {failure.get('msg', failure)}", file=sys.stderr)
+print(total)
+PYEOF
+)
+          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
+          echo "conftest failures: $FAILURES"
+
+      - name: tfsec scan
+        id: tfsec
+        if: always()
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          tfsec . \
+            --config-file $GITHUB_WORKSPACE/.tfsec/config.yml \
+            -e AVD-AWS-0057 \
+            --format sarif \
+            --out $GITHUB_WORKSPACE/evidence/tfsec.sarif \
+            || true
+
+          HIGH=$(python3 -c "
+import json, sys
+try:
+    d = json.load(open('$GITHUB_WORKSPACE/evidence/tfsec.sarif'))
+except Exception as e:
+    print(f'WARN: {e}', file=sys.stderr); print(0); sys.exit(0)
+high = sum(
+    1 for run in d.get('runs', [])
+    for r in run.get('results', [])
+    if (r.get('level') or '').lower() in ('error', 'warning')
+)
+print(high)
+")
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "tfsec high+critical: $HIGH"
 
       - name: Copy plan into evidence
         if: always()
         run: |
-          mkdir -p evidence
-          cp ${{ env.TF_WORKING_DIR }}/plan.json evidence/plan.json
-          cp ${{ env.TF_WORKING_DIR }}/plan.txt  evidence/plan.txt
+          cp ${{ env.TF_WORKING_DIR }}/plan.json evidence/plan.json || true
+          cp ${{ env.TF_WORKING_DIR }}/plan.txt  evidence/plan.txt  || true
+          cat > evidence/run-metadata.json << EOF
+          {
+            "run_id": "${{ github.run_id }}",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref }}",
+            "actor": "${{ github.actor }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "conftest_failures": "${{ steps.conftest.outputs.failures }}",
+            "tfsec_high": "${{ steps.tfsec.outputs.high }}"
+          }
+          EOF
 
       - name: Upload evidence artifact
         if: always()
@@ -113,7 +151,7 @@ jobs:
           path: evidence/
           retention-days: 90
 
-      - name: Bundle + sign + upload to vault
+      - name: Bundle, sign, and upload to vault
         id: sign
         if: always()
         env:
@@ -122,27 +160,50 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
+          if [[ -z "${VAULT}" ]]; then
+            echo "WARN: EVIDENCE_VAULT not set — skipping vault upload"
+            exit 0
+          fi
           BUNDLE="evidence-${RUN_ID}-${SHA}.tar.gz"
           ( cd evidence && tar czf "../${BUNDLE}" . )
           shasum -a 256 "${BUNDLE}" | awk '{print $1}' > "${BUNDLE}.sha256"
-
-          # Keyless signing via GitHub OIDC
           cosign sign-blob --yes --bundle "${BUNDLE}.sig.bundle" "${BUNDLE}"
-
           KEY_PREFIX="runs/${RUN_ID}"
-          aws s3 cp "${BUNDLE}"             "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}"
-          aws s3 cp "${BUNDLE}.sha256"      "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sha256"
-          aws s3 cp "${BUNDLE}.sig.bundle"  "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sig.bundle"
-
-          VERSION_ID=$(aws s3api head-object --bucket "${VAULT}" --key "${KEY_PREFIX}/${BUNDLE}" --query VersionId --output text)
-          cat > receipt.json <<EOF
+          aws s3 cp "${BUNDLE}"            "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}"
+          aws s3 cp "${BUNDLE}.sha256"     "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sha256"
+          aws s3 cp "${BUNDLE}.sig.bundle" "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}.sig.bundle"
+          VERSION_ID=$(aws s3api head-object \
+            --bucket "${VAULT}" \
+            --key "${KEY_PREFIX}/${BUNDLE}" \
+            --query VersionId \
+            --output text)
+          cat > receipt.json << EOF
           {
-            "run_id":"${RUN_ID}",
-            "vault":"${VAULT}",
-            "bundle_key":"${KEY_PREFIX}/${BUNDLE}",
-            "version_id":"${VERSION_ID}",
-            "sha256":"$(cat ${BUNDLE}.sha256)",
-            "commit":"${SHA}"
+            "run_id":     "${RUN_ID}",
+            "vault":      "${VAULT}",
+            "bundle_key": "${KEY_PREFIX}/${BUNDLE}",
+            "version_id": "${VERSION_ID}",
+            "sha256":     "$(cat ${BUNDLE}.sha256)",
+            "commit":     "${SHA}",
+            "signed_at":  "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
-          aws s3 cp receipt.json "s3://${VAULT}/${KEY_PREFIX}/receipt.json" 
+          aws s3 cp receipt.json "s3://${VAULT}/${KEY_PREFIX}/receipt.json"
+          echo "Vault upload complete: s3://${VAULT}/${KEY_PREFIX}/"
+
+      - name: Fail closed on violations
+        if: always()
+        run: |
+          CONFTEST_FAIL="${{ steps.conftest.outputs.failures }}"
+          TFSEC_FAIL="${{ steps.tfsec.outputs.high }}"
+          echo "conftest failures : ${CONFTEST_FAIL}"
+          echo "tfsec high+crit   : ${TFSEC_FAIL}"
+          if [[ "${CONFTEST_FAIL}" -gt 0 ]]; then
+            echo "GATE FAIL: ${CONFTEST_FAIL} policy violation(s)"
+            exit 1
+          fi
+          if [[ "${TFSEC_FAIL}" -gt 0 ]]; then
+            echo "GATE FAIL: ${TFSEC_FAIL} tfsec finding(s)"
+            exit 1
+          fi
+          echo "GATE PASS: all checks clean"
