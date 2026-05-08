@@ -1,4 +1,4 @@
-package main
+package vpc
 import rego.v1
 
 metadata_vpc := {

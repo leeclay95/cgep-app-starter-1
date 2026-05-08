@@ -1,34 +1,40 @@
-package main
+package least_privilege
 import rego.v1
-
-metadata_lp := {
-    "framework": "CMMC-L2",
-    "control_id": "AC.L2-3.1.5",
-    "severity": "HIGH",
-    "remediation": "Replace wildcards (*) in IAM policies with specific, named actions.",
-}
 
 deny contains msg if {
     some p in input.resource_changes
     p.type == "aws_iam_role_policy"
     policy_doc := json.unmarshal(p.change.after.policy)
     some statement in policy_doc.Statement
-    is_wildcard(statement.Action)
-    msg := sprintf(
-        "CMMC Violation [%s]: IAM policy '%s' contains forbidden wildcard actions.",
-        [metadata_lp.control_id, p.address],
-    )
+    
+    # Check if the Action contains a wildcard
+    has_wildcard(statement.Action)
+    
+    msg := sprintf("CMMC Violation: IAM policy contains forbidden wildcard actions.", [])
 }
 
-# HELPER: Only fail if the ACTION is exactly a wildcard.
-# This IGNORES path wildcards like "uploads/*" in the Resource field.
-is_wildcard(action) if {
+# Rule 1: Handle single string actions (Exact *)
+has_wildcard(action) if {
     is_string(action)
-    action == "*"  
+    action == "*"
 }
 
-is_wildcard(action) if {
+# Rule 1b: Handle single string actions (Prefix :*)
+has_wildcard(action) if {
+    is_string(action)
+    endswith(action, ":*")
+}
+
+# Rule 2: Handle arrays (Exact *)
+has_wildcard(action) if {
     is_array(action)
     some a in action
     a == "*"
+}
+
+# Rule 2b: Handle arrays (Prefix :*)
+has_wildcard(action) if {
+    is_array(action)
+    some a in action
+    endswith(a, ":*")
 }
