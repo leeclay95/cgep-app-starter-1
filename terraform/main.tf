@@ -271,6 +271,19 @@ resource "aws_s3_bucket_policy" "logs_allow_delivery" {
             "aws:SourceArn" = aws_s3_bucket.uploads.arn
           }
         }
+      },
+      {
+        Sid       = "EnforceTLS"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource  = [
+          aws_s3_bucket.logs.arn,
+          "${aws_s3_bucket.logs.arn}/*"
+        ]
+        Condition = {
+          Bool = { "aws:SecureTransport" = "false" }
+        }
       }
     ]
   })
