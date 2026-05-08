@@ -1,0 +1,11 @@
+{
+  "component-definition": {
+    "uuid": "5459abb0-f893-4db3-906c-931639d2f63a",
+    "metadata": {
+      "title": "Generic component-definition created by trestle named patient-intake-api.",
+      "last-modified": "2026-05-07T19:38:49.550985-06:00",
+      "version": "0.0.0",
+      "oscal-version": "1.2.1"
+    }
+  }
+}

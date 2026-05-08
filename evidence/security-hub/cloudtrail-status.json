@@ -1,0 +1,12 @@
+{
+    "IsLogging": true,
+    "LatestDeliveryTime": "2026-05-07T21:48:13.346000-06:00",
+    "StartLoggingTime": "2026-05-07T15:37:51.810000-06:00",
+    "LatestDigestDeliveryTime": "2026-05-07T21:45:48.709000-06:00",
+    "LatestDeliveryAttemptTime": "2026-05-08T03:48:13Z",
+    "LatestNotificationAttemptTime": "",
+    "LatestNotificationAttemptSucceeded": "",
+    "LatestDeliveryAttemptSucceeded": "2026-05-08T03:48:13Z",
+    "TimeLoggingStarted": "2026-05-07T21:37:51Z",
+    "TimeLoggingStopped": ""
+}

@@ -1,0 +1,32 @@
+{
+    "EvaluationResults": [
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "vpc-flow-logs-enabled",
+                    "ResourceType": "AWS::EC2::VPC",
+                    "ResourceId": "vpc-017ff5a2690d07dcb",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:31.245000-06:00"
+            },
+            "ComplianceType": "COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:03.901000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:03.500000-06:00"
+        },
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "vpc-flow-logs-enabled",
+                    "ResourceType": "AWS::EC2::VPC",
+                    "ResourceId": "vpc-022f816b1af71fcbd",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:31.245000-06:00"
+            },
+            "ComplianceType": "NON_COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:03.910000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:03.500000-06:00"
+        }
+    ]
+}

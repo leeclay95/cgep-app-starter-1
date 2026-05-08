@@ -6,3 +6,9 @@
 tfplan
 to_delete.json
 to_delete_markers.json
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db

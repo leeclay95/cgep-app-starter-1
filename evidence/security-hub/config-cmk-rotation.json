@@ -1,0 +1,32 @@
+{
+    "EvaluationResults": [
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "cmk-backing-key-rotation-enabled",
+                    "ResourceType": "AWS::KMS::Key",
+                    "ResourceId": "401bbf35-f910-4e85-9ac4-323dccde8027",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:31.245000-06:00"
+            },
+            "ComplianceType": "COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:03.770000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:03.465000-06:00"
+        },
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "cmk-backing-key-rotation-enabled",
+                    "ResourceType": "AWS::KMS::Key",
+                    "ResourceId": "bce6dc24-7c6a-43ad-ac53-cb3fce1da8f0",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:31.245000-06:00"
+            },
+            "ComplianceType": "NON_COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:03.812000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:03.465000-06:00"
+        }
+    ]
+}
