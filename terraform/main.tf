@@ -332,22 +332,6 @@ resource "aws_s3_bucket_policy" "uploads_tls_only" {
   })
 }
 
-# SC.L2-3.13.8: Enforce TLS for LOGS (Required to pass the gate)
-resource "aws_s3_bucket_policy" "logs_tls_only" {
-  bucket = aws_s3_bucket.logs.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid       = "EnforceTLS",
-      Effect    = "Deny",
-      Principal = "*",
-      Action    = "s3:*",
-      Resource  = [aws_s3_bucket.logs.arn, "${aws_s3_bucket.logs.arn}/*"],
-      Condition = { Bool = { "aws:SecureTransport" = "false" } }
-    }]
-  })
-}
-
 resource "aws_s3_bucket_public_access_block" "uploads" {
   bucket                  = aws_s3_bucket.uploads.id
   block_public_acls       = true
@@ -416,7 +400,7 @@ resource "aws_iam_role_policy" "lambda_inline" {
         # GAP-07 / [FIX-RESULT1]: scoped to only the actions required.
         # DynamoDB: only PutItem (write submissions) + DescribeTable (health check).
         Effect   = "Allow"
-        Action   = ["dynamodb:PutItem", "dynamodb:DescribeTable"] # VIOLATION: triggers enforce_least_privilege.rego ###
+        Action   = ["dynamodb:PutItem", "dynamodb:DescribeTable"] # VIOLATION: triggers enforce_least_privilege.rego
         Resource = aws_dynamodb_table.intake.arn
       },
       {
