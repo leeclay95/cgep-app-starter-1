@@ -1,0 +1,112 @@
+{
+  "component-definition": {
+    "uuid": "f7b53a67-647c-4e9d-a6a9-d1420e10e02b",
+    "metadata": {
+      "title": "Acme Health Patient Intake API - CMMC Component Definition",
+      "last-modified": "2026-05-07T19:15:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.1",
+      "parties": [
+        {
+          "uuid": "2e9b3a1d-7c8f-4f2a-b1e9-8d5c3b4a2e1f",
+          "type": "organization",
+          "name": "Acme Health GRC Engineering",
+          "remarks": "Lead GRC Engineer: Lee Clayton"
+        }
+      ]
+    },
+    "components": [
+      {
+        "uuid": "9d5e3c1b-4a2f-4e8d-b7c6-1f0a9b8d7c6e",
+        "type": "service",
+        "title": "Patient Intake API",
+        "description": "Serverless ingestion engine for PHI, utilizing AWS Lambda, DynamoDB, and S3, hardened against CMMC Level 2 controls.",
+        "purpose": "Securely ingest patient data and provide immutable audit trails.",
+        "control-implementations": [
+          {
+            "uuid": "3c2a1b0d-9e8f-4d7c-b6a5-1f2e3d4c5b6a",
+            "source": "https://github.com/usnistgov/oscal-content/blob/master/nist.gov/SP.800-171/rev2/oscal/nist800-171-rev2-catalog.json",
+            "description": "Technical control implementation managed via Terraform and verified by OPA/Rego policies.",
+            "implemented-requirements": [
+              {
+                "uuid": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
+                "control-id": "sc.l2-3.13.11",
+                "description": "FIPS-validated cryptography (KMS) is enforced for all CUI/PHI storage.",
+                "statements": [
+                  {
+                    "statement-id": "sc.l2-3.13.11_smt",
+                    "description": "Encryption is managed via Customer Managed Keys (CMK) with rotation enabled. Default AWS managed keys are prohibited."
+                  }
+                ],
+                "props": [
+                  { "name": "resource-address", "value": "aws_s3_bucket_server_side_encryption_configuration.uploads_kms" },
+                  { "name": "resource-address", "value": "aws_dynamodb_table.intake.server_side_encryption" },
+                  { "name": "kms-key-arn", "value": "arn:aws:kms:us-east-1:969958573430:key/401bbf35-f910-4e85-9ac4-323dccde8027" }
+                ]
+              },
+              {
+                "uuid": "67b53a42-1234-4e9d-a6a9-d1420e10e02b",
+                "control-id": "sc.l2-3.13.1",
+                "description": "Boundary protection via VPC isolation and Interface Endpoints.",
+                "statements": [
+                  {
+                    "statement-id": "sc.l2-3.13.1_smt",
+                    "description": "The intake Lambda is isolated within private subnets. All service communication (S3, DynamoDB, KMS) occurs over PrivateLink VPC Endpoints with no public internet egress."
+                  }
+                ],
+                "props": [
+                  { "name": "resource-address", "value": "aws_lambda_function.intake.vpc_config" },
+                  { "name": "resource-address", "value": "aws_vpc_endpoint.s3" },
+                  { "name": "egress-protection", "value": "Security Group limited to VPC CIDR only" }
+                ]
+              },
+              {
+                "uuid": "8e9f2a3b-5678-4cde-90ab-1234567890cd",
+                "control-id": "sc.l2-3.13.8",
+                "description": "Data in transit is protected via mandatory TLS 1.2+ enforcement.",
+                "statements": [
+                  {
+                    "statement-id": "sc.l2-3.13.8_smt",
+                    "description": "S3 bucket policies explicitly deny non-HTTPS (aws:SecureTransport = false) requests."
+                  }
+                ],
+                "props": [
+                  { "name": "resource-address", "value": "aws_s3_bucket_policy.uploads_tls_only" }
+                ]
+              },
+              {
+                "uuid": "b2c3d4e5-9012-4fgh-i1j2-k3l4m5n6o7p8",
+                "control-id": "ac.l2-3.1.5",
+                "description": "Least privilege is enforced on all service-to-service identities.",
+                "statements": [
+                  {
+                    "statement-id": "ac.l2-3.1.5_smt",
+                    "description": "IAM inline policies use resource-level ARNs and specific actions, eliminating wildcards for sensitive operations."
+                  }
+                ],
+                "props": [
+                  { "name": "resource-address", "value": "aws_iam_role_policy.lambda_inline" }
+                ]
+              },
+              {
+                "uuid": "c3d4e5f6-3456-4hij-k2l3-m4n5o6p7q8r9",
+                "control-id": "mp.l2-3.8.9",
+                "description": "Protection of media (PHI) via versioning and Object Lock.",
+                "statements": [
+                  {
+                    "statement-id": "mp.l2-3.8.9_smt",
+                    "description": "Versioning ensures data recovery from accidental overwrites. The evidence vault utilizes GOVERNANCE mode Object Lock."
+                  }
+                ],
+                "props": [
+                  { "name": "resource-address", "value": "aws_s3_bucket_versioning.uploads" },
+                  { "name": "vault-retention", "value": "1-day Object Lock" }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
