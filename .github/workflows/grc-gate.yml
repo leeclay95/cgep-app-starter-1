@@ -68,11 +68,12 @@ jobs:
       - name: Terraform Plan
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          terraform init
-          # Generate the NEW plan binary
-          terraform plan -out=tfplan
-          # Convert the NEW plan binary to JSON in the location Conftest expects
+          terraform init -input=false
+          terraform plan -out=tfplan -no-color
+          
           terraform show -json tfplan > plan.json
+      
+          terraform show tfplan > plan.txt
 
       - name: Conftest policy gate
         run: |
