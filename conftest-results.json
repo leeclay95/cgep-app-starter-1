@@ -1,0 +1,27 @@
+[
+	{
+		"filename": "plan.json",
+		"namespace": "vpc",
+		"successes": 1
+	},
+	{
+		"filename": "plan.json",
+		"namespace": "kms",
+		"successes": 2
+	},
+	{
+		"filename": "plan.json",
+		"namespace": "least_privilege",
+		"successes": 1
+	},
+	{
+		"filename": "plan.json",
+		"namespace": "versioning",
+		"successes": 1
+	},
+	{
+		"filename": "plan.json",
+		"namespace": "tls",
+		"successes": 1
+	}
+]
