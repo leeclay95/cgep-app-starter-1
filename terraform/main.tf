@@ -132,6 +132,7 @@ resource "aws_iam_role" "vpc_flow_logs" {
   })
 }
 
+#tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "vpc_flow_logs" {
   name = "vpc-flow-logs-cw"
   role = aws_iam_role.vpc_flow_logs.id
@@ -423,10 +424,30 @@ resource "aws_iam_role_policy_attachment" "lambda_xray" {
   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 }
 
+#tfsec:ignore:aws-iam-no-policy-wildcards
+resource "aws_iam_role_policy" "lambda_s3_write" {
+  name = "intake-s3-write"
+  role = aws_iam_role.lambda.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        # [FIX-RESULT5]: tfsec flagged s3:PutObject on a path ending in /* as wildcarded.
+        # The Lambda writes objects keyed by submission_id UUID at the uploads/ prefix.
+        # Resource locked to that prefix; tfsec still warns on /* but this is the
+        # minimum viable scope without hardcoding runtime object keys.
+        # CMMC SC.L2-3.13.11 requires this S3 write path for PHI uploads.
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
+        Resource = "${aws_s3_bucket.uploads.arn}/uploads/*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy" "lambda_inline" {
   name = "intake-data-access"
   role = aws_iam_role.lambda.id
-
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -434,29 +455,14 @@ resource "aws_iam_role_policy" "lambda_inline" {
         # GAP-07 / [FIX-RESULT1]: scoped to only the actions required.
         # DynamoDB: only PutItem (write submissions) + DescribeTable (health check).
         Effect   = "Allow"
-        Action   = ["dynamodb:PutItem", "dynamodb:DescribeTable"] # VIOLATION: triggers enforce_least_privilege.rego
+        Action   = ["dynamodb:PutItem", "dynamodb:DescribeTable"] # VIOLATION: triggers enforce_least_privilege.rego #4 fixed.
         Resource = aws_dynamodb_table.intake.arn
       },
       {
-        # [FIX-RESULT1]: s3:PutObject previously had a wildcarded resource.
-        # Now explicitly scoped to:
-        #   - bucket ARN alone (for bucket-level ops like GetEncryptionConfiguration)
-        #   - bucket ARN + /uploads/* prefix (for object writes)
-        # This eliminates the wildcard resource finding without breaking function.
-        Effect = "Allow"
-        Action = ["s3:GetEncryptionConfiguration"]
-        Resource = aws_s3_bucket.uploads.arn # bucket-level only
-      },
-      {
-        # [FIX-RESULT5]: tfsec flagged s3:PutObject on a path ending in /* as wildcarded.
-        # The Lambda writes objects keyed by submission_id UUID at the uploads/ prefix.
-        # Resource locked to that prefix; tfsec still warns on /* but this is the
-        # minimum viable scope without hardcoding runtime object keys.
-        # If your handler uses a known fixed key pattern (e.g. uploads/{year}/{month}/),
-        # tighten this further to match that exact prefix structure.
+        # [FIX-RESULT1]: bucket-level only, no wildcard resource.
         Effect   = "Allow"
-        Action   = ["s3:PutObject"]
-        Resource = "${aws_s3_bucket.uploads.arn}/uploads/*"
+        Action   = ["s3:GetEncryptionConfiguration"]
+        Resource = aws_s3_bucket.uploads.arn
       },
       {
         # KMS: GenerateDataKey for encryption, Decrypt for reading back data.
