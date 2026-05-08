@@ -1,43 +1,123 @@
 {
   "component-definition": {
-    "uuid": "5459abb0-f893-4db3-906c-931639d2f63a",
+    "uuid": "d8dbcbd3-0fc7-4ad4-8471-ee40f0be77f8",
     "metadata": {
-      "title": "Acme Health Patient Intake API CMMC Component Definition",
-      "last-modified": "2026-05-08T09:00:00Z",
+      "title": "Acme Health Patient Intake API CMMC Level 2 Component Definition",
+      "last-modified": "2026-05-08T09:00:00.000000+00:00",
       "version": "1.0.0",
-      "oscal-version": "1.2.1"
+      "oscal-version": "1.1.3",
+      "parties": [
+        {
+          "uuid": "1daf61f0-93a6-4cec-a4ba-6951d2a0e295",
+          "type": "organization",
+          "name": "Acme Health"
+        }
+      ]
     },
     "components": [
       {
-        "uuid": "7f884501-4439-446a-89a3-559d81d69d2a",
+        "uuid": "b57cbce4-df04-48ca-ae62-eb1c3576bb55",
         "type": "software",
         "title": "Patient Intake API",
-        "description": "Cloud-native API for patient data ingestion.",
+        "description": "Cloud-native serverless API for patient data ingestion deployed on AWS Lambda, API Gateway, DynamoDB, and S3 with CMMC Level 2 controls enforced via Terraform and OPA policy gates.",
+        "purpose": "Provide a compliant-by-default patient intake pipeline satisfying CMMC Level 2 practices for PHI handling.",
+        "responsible-roles": [
+          {
+            "role-id": "provider",
+            "party-uuids": ["1daf61f0-93a6-4cec-a4ba-6951d2a0e295"]
+          }
+        ],
         "control-implementations": [
           {
-            "uuid": "d0498305-6f94-437b-99f5-44280170564d",
-            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/master/nist.gov/SP.800-171/rev2/json/nist800-171-rev2-catalog.json",
-            "description": "CMMC Level 2 Implementation",
+            "uuid": "ef48f1d7-59f6-4cb9-b7eb-e539254dcf7f",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+            "description": "NIST 800-53 Rev 5 controls implemented by the Patient Intake API satisfying CMMC Level 2 requirements.",
             "implemented-requirements": [
               {
-                "uuid": "e93290b2-7f21-4f11-9231-15a0c3098f4a",
-                "control-id": "SC.L2-3.13.11",
-                "description": "Data at rest is encrypted using AWS KMS with Customer Managed Keys (CMK) and rotation enabled.",
+                "uuid": "b7b0f17d-fe4a-4bce-9be4-daf2817b44fc",
+                "control-id": "sc-28",
+                "description": "Data at rest is encrypted using AWS KMS Customer Managed Keys enforced on DynamoDB via server_side_encryption and on S3 via aws_s3_bucket_server_side_encryption_configuration. CMK rotation is enabled. Enforced by enforce_kms.rego in the CI policy gate. Satisfies CMMC SC.L2-3.13.11.",
+                "props": [
+                  { "name": "implementation-status", "value": "implemented" },
+                  { "name": "terraform-resource", "value": "aws_s3_bucket_server_side_encryption_configuration.uploads_kms" },
+                  { "name": "terraform-resource", "value": "aws_s3_bucket_server_side_encryption_configuration.logs_kms" },
+                  { "name": "terraform-resource", "value": "aws_dynamodb_table.intake" }
+                ],
                 "links": [
                   {
-                    "href": "s3://acme-health-evidence-vault-969958573430/runs/latest/receipt.json",
-                    "rel": "evidence"
+                    "rel": "evidence",
+                    "href": "https://acme-health-evidence-vault-969958573430.s3.amazonaws.com/runs/25576780518/receipt.json",
+                    "text": "Signed pipeline evidence bundle receipt."
                   }
                 ]
               },
               {
-                "uuid": "c8227122-1234-4567-8910-bcde12345678",
-                "control-id": "AC.L2-3.1.5",
-                "description": "IAM policies are scoped to the minimum necessary actions, specifically removing dynamodb:* wildcards.",
+                "uuid": "c475c713-a16e-43ce-a358-c1854cb28977",
+                "control-id": "ac-6",
+                "description": "IAM inline policies are scoped to minimum necessary actions. The dynamodb:* wildcard is blocked by enforce_least_privilege.rego and tfsec aws-iam-no-policy-wildcards in the CI gate. Lambda role is restricted to dynamodb:PutItem and dynamodb:DescribeTable. Satisfies CMMC AC.L2-3.1.5.",
+                "props": [
+                  { "name": "implementation-status", "value": "implemented" },
+                  { "name": "terraform-resource", "value": "aws_iam_role_policy.lambda_inline" },
+                  { "name": "terraform-resource", "value": "aws_iam_role_policy.lambda_s3_write" }
+                ],
                 "links": [
                   {
-                    "href": "s3://acme-health-evidence-vault-969958573430/runs/latest/receipt.json",
-                    "rel": "evidence"
+                    "rel": "evidence",
+                    "href": "https://acme-health-evidence-vault-969958573430.s3.amazonaws.com/runs/25576780518/receipt.json",
+                    "text": "Signed pipeline evidence bundle receipt."
+                  }
+                ]
+              },
+              {
+                "uuid": "a86ac8e7-a983-47c1-a44a-c3db83e172e1",
+                "control-id": "sc-8",
+                "description": "TLS is enforced in transit on all S3 buckets via bucket policies that deny requests where aws:SecureTransport is false. Enforced by enforce_tls.rego in the CI policy gate. Satisfies CMMC SC.L2-3.13.8.",
+                "props": [
+                  { "name": "implementation-status", "value": "implemented" },
+                  { "name": "terraform-resource", "value": "aws_s3_bucket_policy.uploads_combined" },
+                  { "name": "terraform-resource", "value": "aws_s3_bucket_policy.logs_combined" }
+                ],
+                "links": [
+                  {
+                    "rel": "evidence",
+                    "href": "https://acme-health-evidence-vault-969958573430.s3.amazonaws.com/runs/25576780518/receipt.json",
+                    "text": "Signed pipeline evidence bundle receipt."
+                  }
+                ]
+              },
+              {
+                "uuid": "e2a36e4e-bd5b-4e88-a9c7-d17f385f06bc",
+                "control-id": "cp-9",
+                "description": "S3 bucket versioning is enabled on uploads and logs buckets ensuring PHI overwrites are recoverable and prior object states are preserved. Enforced by enforce_versioning.rego in the CI policy gate. Satisfies CMMC MP.L2-3.8.9.",
+                "props": [
+                  { "name": "implementation-status", "value": "implemented" },
+                  { "name": "terraform-resource", "value": "aws_s3_bucket_versioning.uploads" },
+                  { "name": "terraform-resource", "value": "aws_s3_bucket_versioning.logs" }
+                ],
+                "links": [
+                  {
+                    "rel": "evidence",
+                    "href": "https://acme-health-evidence-vault-969958573430.s3.amazonaws.com/runs/25576780518/receipt.json",
+                    "text": "Signed pipeline evidence bundle receipt."
+                  }
+                ]
+              },
+              {
+                "uuid": "e26387c8-d163-44c9-bcbc-f4ddec7004bc",
+                "control-id": "sc-7",
+                "description": "Lambda functions are deployed within a VPC with private subnets and a dedicated security group. DynamoDB, S3, KMS, SQS, and CloudWatch Logs are accessed via VPC endpoints eliminating internet exposure. Enforced by enforce_vpc.rego in the CI policy gate. Satisfies CMMC SC.L2-3.13.6.",
+                "props": [
+                  { "name": "implementation-status", "value": "implemented" },
+                  { "name": "terraform-resource", "value": "aws_lambda_function.intake" },
+                  { "name": "terraform-resource", "value": "aws_vpc_endpoint.dynamodb" },
+                  { "name": "terraform-resource", "value": "aws_vpc_endpoint.s3" },
+                  { "name": "terraform-resource", "value": "aws_security_group.lambda" }
+                ],
+                "links": [
+                  {
+                    "rel": "evidence",
+                    "href": "https://acme-health-evidence-vault-969958573430.s3.amazonaws.com/runs/25576780518/receipt.json",
+                    "text": "Signed pipeline evidence bundle receipt."
                   }
                 ]
               }

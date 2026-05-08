@@ -1,16 +1,22 @@
 {
   "profile": {
-    "uuid": "720bd4d7-74de-4879-9847-c6c8de8676d3",
+    "uuid": "c1511797-8f92-4789-bb4b-1a36c1ad0b52",
     "metadata": {
-      "title": "Generic profile created by trestle named cmmc-level-2.",
-      "last-modified": "2026-05-08T09:08:17.545998-06:00",
-      "version": "0.0.0",
-      "oscal-version": "1.2.1"
+      "title": "Acme Health CMMC Level 2 Control Selection",
+      "last-modified": "2026-05-08T09:00:00.000000+00:00",
+      "version": "1.0.0",
+      "oscal-version": "1.1.3"
     },
     "imports": [
       {
-        "include-all": {}
+        "href": "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json",
+        "include-controls": [
+          {
+            "with-ids": ["sc-28", "ac-6", "sc-8", "cp-9", "sc-7"]
+          }
+        ]
       }
-    ]
+    ],
+    "merge": { "as-is": true }
   }
 }
