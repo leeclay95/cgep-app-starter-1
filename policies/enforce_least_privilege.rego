@@ -1,11 +1,10 @@
 package main
-
 import rego.v1
 
 metadata_lp := {
-    "framework":   "CMMC-L2",
-    "control_id":  "AC.L2-3.1.5",
-    "severity":    "HIGH",
+    "framework": "CMMC-L2",
+    "control_id": "AC.L2-3.1.5",
+    "severity": "HIGH",
     "remediation": "Replace wildcards (*) in IAM policies with specific, named actions.",
 }
 
@@ -21,13 +20,15 @@ deny contains msg if {
     )
 }
 
+# HELPER: Only fail if the ACTION is exactly a wildcard.
+# This IGNORES path wildcards like "uploads/*" in the Resource field.
 is_wildcard(action) if {
     is_string(action)
-    contains(action, "*")
+    action == "*"  
 }
 
 is_wildcard(action) if {
     is_array(action)
     some a in action
-    contains(a, "*")
+    a == "*"
 }

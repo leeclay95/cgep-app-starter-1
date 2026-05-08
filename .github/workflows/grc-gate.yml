@@ -138,7 +138,7 @@ jobs:
           ( cd $GITHUB_WORKSPACE/evidence && tar czf "../${BUNDLE}" . )
           shasum -a 256 "${BUNDLE}" | awk '{print $1}' > "${BUNDLE}.sha256"
 
-          cosign sign-blob --yes --output-bundle "${BUNDLE}.sig.bundle" "${BUNDLE}"
+          cosign sign-blob --yes --bundle "${BUNDLE}.sig.bundle" "${BUNDLE}"
 
           KEY_PREFIX="runs/${RUN_ID}"
           aws s3 cp "${BUNDLE}"            "s3://${VAULT}/${KEY_PREFIX}/${BUNDLE}"
