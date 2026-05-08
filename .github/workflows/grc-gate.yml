@@ -74,32 +74,43 @@ jobs:
           terraform show -json tfplan > plan.json
 
       - name: Conftest policy gate
-        working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          conftest test plan.json --policy $GITHUB_WORKSPACE/policies --all-namespaces --output json > $GITHUB_WORKSPACE/evidence/conftest-results.json || true
+          # 1. Verify files exist before running (Debug)
+          ls -R ${{ github.workspace }}/policies
+          ls ${{ github.workspace }}/terraform/plan.json
 
+          # 2. Run Conftest using absolute paths for both policy and data
+          # We run from the root, targeting the plan inside the terraform folder
+          conftest test ${{ github.workspace }}/terraform/plan.json \
+            --policy ${{ github.workspace }}/policies \
+            --all-namespaces \
+            --output json > ${{ github.workspace }}/evidence/conftest-results.json || true
+
+          # 3. Enhanced Python Parser
           python3 -c "
           import json, sys, os
           path = '${{ github.workspace }}/evidence/conftest-results.json'
+          
           if not os.path.exists(path) or os.stat(path).st_size == 0:
-              print('ERROR: No conftest results found'); sys.exit(1)
+              print('FAIL: Conftest failed to produce a results file'); sys.exit(1)
           
           with open(path) as f:
               data = json.load(f)
           
-          # Standardize input to a list
+          # Conftest JSON is a list of file-result objects
           results = data if isinstance(data, list) else [data]
           
-          total_fails = 0
-          for entry in results:
-              if isinstance(entry, list):
-                  for sub in entry:
-                      total_fails += len(sub.get('failures', []) or [])
-              else:
-                  total_fails += len(entry.get('failures', []) or [])
-          
-          print(f'Total Policy Violations Found: {total_fails}')
-          sys.exit(0 if total_fails == 0 else 1)
+          total_violations = 0
+          for file_result in results:
+              # Check for standard 'failures'
+              total_violations += len(file_result.get('failures', []) or [])
+              # Check for 'errors' (syntax errors in your Rego)
+              if file_result.get('errors'):
+                  print(f'Rego Errors Found: {file_result["errors"]}')
+                  total_violations += len(file_result['errors'])
+
+          print(f'Total Policy Violations Found: {total_violations}')
+          sys.exit(0 if total_violations == 0 else 1)
           "
 
       - name: tfsec scan
