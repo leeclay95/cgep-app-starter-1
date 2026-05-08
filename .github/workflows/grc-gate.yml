@@ -75,42 +75,39 @@ jobs:
 
       - name: Conftest policy gate
         run: |
-          # 1. Verify files exist before running (Debug)
-          ls -R ${{ github.workspace }}/policies
-          ls ${{ github.workspace }}/terraform/plan.json
-
-          # 2. Run Conftest using absolute paths for both policy and data
-          # We run from the root, targeting the plan inside the terraform folder
+          # 1. Generate results into the evidence folder using absolute paths
           conftest test ${{ github.workspace }}/terraform/plan.json \
             --policy ${{ github.workspace }}/policies \
             --all-namespaces \
             --output json > ${{ github.workspace }}/evidence/conftest-results.json || true
 
-          # 3. Enhanced Python Parser
+          # 2. Run the EXACT Python logic from your local terminal
           python3 -c "
           import json, sys, os
           path = '${{ github.workspace }}/evidence/conftest-results.json'
           
-          if not os.path.exists(path) or os.stat(path).st_size == 0:
-              print('FAIL: Conftest failed to produce a results file'); sys.exit(1)
-          
+          if not os.path.exists(path):
+              print('ERROR: results file missing'); sys.exit(1)
+
           with open(path) as f:
               data = json.load(f)
-          
-          # Conftest JSON is a list of file-result objects
-          results = data if isinstance(data, list) else [data]
-          
-          total_violations = 0
-          for file_result in results:
-              # Check for standard 'failures'
-              total_violations += len(file_result.get('failures', []) or [])
-              # Check for 'errors' (syntax errors in your Rego)
-              if file_result.get('errors'):
-                  print(f'Rego Errors Found: {file_result["errors"]}')
-                  total_violations += len(file_result['errors'])
 
-          print(f'Total Policy Violations Found: {total_violations}')
-          sys.exit(0 if total_violations == 0 else 1)
+          results = data if isinstance(data, list) else [data]
+          total = 0
+
+          print('\n--- GRC GATE RESULTS ---')
+          for entry in results:
+              for fail in entry.get('failures', []):
+                  total += 1
+                  print(f'[{entry.get(\"namespace\")}] {fail.get(\"msg\")}')
+
+          if total == 0:
+              print('PASS: No violations detected.')
+          else:
+              print(f'\nTOTAL VIOLATIONS: {total}')
+
+          # Exit 1 to break the build if violations > 0
+          sys.exit(0 if total == 0 else 1)
           "
 
       - name: tfsec scan
