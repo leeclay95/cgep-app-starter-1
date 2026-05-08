@@ -1,0 +1,74 @@
+{
+    "EvaluationResults": [
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "s3-bucket-ssl-requests-only",
+                    "ResourceType": "AWS::S3::Bucket",
+                    "ResourceId": "acme-health-intake-uploads-4fa2ee1b",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:43.747000-06:00"
+            },
+            "ComplianceType": "COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:12.079000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:11.837000-06:00"
+        },
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "s3-bucket-ssl-requests-only",
+                    "ResourceType": "AWS::S3::Bucket",
+                    "ResourceId": "acme-health-config-969958573430",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:42.764000-06:00"
+            },
+            "ComplianceType": "NON_COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:15.928000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:15.607000-06:00"
+        },
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "s3-bucket-ssl-requests-only",
+                    "ResourceType": "AWS::S3::Bucket",
+                    "ResourceId": "acme-health-evidence-vault-969958573430",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:43.088000-06:00"
+            },
+            "ComplianceType": "NON_COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:16.536000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:16.330000-06:00"
+        },
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "s3-bucket-ssl-requests-only",
+                    "ResourceType": "AWS::S3::Bucket",
+                    "ResourceId": "acme-health-intake-access-logs-4fa2ee1b",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:43.449000-06:00"
+            },
+            "ComplianceType": "NON_COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:15.046000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:14.809000-06:00"
+        },
+        {
+            "EvaluationResultIdentifier": {
+                "EvaluationResultQualifier": {
+                    "ConfigRuleName": "s3-bucket-ssl-requests-only",
+                    "ResourceType": "AWS::S3::Bucket",
+                    "ResourceId": "acme-health-trail-logs-969958573430",
+                    "EvaluationMode": "DETECTIVE"
+                },
+                "OrderingTimestamp": "2026-05-07T21:16:44.041000-06:00"
+            },
+            "ComplianceType": "NON_COMPLIANT",
+            "ResultRecordedTime": "2026-05-07T21:17:20.782000-06:00",
+            "ConfigRuleInvokedTime": "2026-05-07T21:17:20.506000-06:00"
+        }
+    ]
+}

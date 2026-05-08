@@ -1,0 +1,51 @@
+{
+	"results": [
+		{
+			"rule_id": "AVD-AWS-0057",
+			"long_id": "aws-iam-no-policy-wildcards",
+			"rule_description": "IAM policy should avoid use of wildcards and instead apply the principle of least privilege",
+			"rule_provider": "aws",
+			"rule_service": "iam",
+			"impact": "Overly permissive policies may grant access to sensitive resources",
+			"resolution": "Specify the exact permissions required, and to which resources they should apply instead of using wildcards.",
+			"links": [
+				"https://aquasecurity.github.io/tfsec/v1.28.14/checks/aws/iam/no-policy-wildcards/",
+				"https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document"
+			],
+			"description": "IAM policy document uses sensitive action 's3:PutObject' on wildcarded resource '1b5f74b1-b7a4-4aa0-8a9c-a81a011593d6/uploads/*'",
+			"severity": "HIGH",
+			"warning": false,
+			"status": 0,
+			"resource": "aws_iam_role_policy.lambda_inline",
+			"location": {
+				"filename": "C:\\Users\\lee.clayton_darkwolf\\grc-capstone\\cgep-app-starter-1\\terraform\\main.tf",
+				"start_line": 397,
+				"end_line": 397
+			}
+		},
+		{
+			"rule_id": "AVD-AWS-0057",
+			"long_id": "aws-iam-no-policy-wildcards",
+			"rule_description": "IAM policy should avoid use of wildcards and instead apply the principle of least privilege",
+			"rule_provider": "aws",
+			"rule_service": "iam",
+			"impact": "Overly permissive policies may grant access to sensitive resources",
+			"resolution": "Specify the exact permissions required, and to which resources they should apply instead of using wildcards.",
+			"links": [
+				"https://aquasecurity.github.io/tfsec/v1.28.14/checks/aws/iam/no-policy-wildcards/",
+				"https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document"
+			],
+			"description": "IAM policy document uses sensitive action 'logs:CreateLogStream' on wildcarded resource '897354af-827e-4d3a-a96f-8a6a0e44a92a:log-stream:*'",
+			"severity": "HIGH",
+			"warning": false,
+			"status": 0,
+			"resource": "aws_iam_role_policy.vpc_flow_logs",
+			"location": {
+				"filename": "C:\\Users\\lee.clayton_darkwolf\\grc-capstone\\cgep-app-starter-1\\terraform\\main.tf",
+				"start_line": 143,
+				"end_line": 143
+			}
+		}
+	]
+}
+{"results":[]}
