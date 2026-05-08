@@ -2,10 +2,49 @@
   "component-definition": {
     "uuid": "5459abb0-f893-4db3-906c-931639d2f63a",
     "metadata": {
-      "title": "Generic component-definition created by trestle named patient-intake-api.",
-      "last-modified": "2026-05-07T19:38:49.550985-06:00",
-      "version": "0.0.0",
+      "title": "Acme Health Patient Intake API CMMC Component Definition",
+      "last-modified": "2026-05-08T09:00:00Z",
+      "version": "1.0.0",
       "oscal-version": "1.2.1"
-    }
+    },
+    "components": [
+      {
+        "uuid": "7f884501-4439-446a-89a3-559d81d69d2a",
+        "type": "software",
+        "title": "Patient Intake API",
+        "description": "Cloud-native API for patient data ingestion.",
+        "control-implementations": [
+          {
+            "uuid": "d0498305-6f94-437b-99f5-44280170564d",
+            "source": "https://raw.githubusercontent.com/usnistgov/oscal-content/master/nist.gov/SP.800-171/rev2/json/nist800-171-rev2-catalog.json",
+            "description": "CMMC Level 2 Implementation",
+            "implemented-requirements": [
+              {
+                "uuid": "e93290b2-7f21-4f11-9231-15a0c3098f4a",
+                "control-id": "SC.L2-3.13.11",
+                "description": "Data at rest is encrypted using AWS KMS with Customer Managed Keys (CMK) and rotation enabled.",
+                "links": [
+                  {
+                    "href": "s3://acme-health-evidence-vault-969958573430/runs/latest/receipt.json",
+                    "rel": "evidence"
+                  }
+                ]
+              },
+              {
+                "uuid": "c8227122-1234-4567-8910-bcde12345678",
+                "control-id": "AC.L2-3.1.5",
+                "description": "IAM policies are scoped to the minimum necessary actions, specifically removing dynamodb:* wildcards.",
+                "links": [
+                  {
+                    "href": "s3://acme-health-evidence-vault-969958573430/runs/latest/receipt.json",
+                    "rel": "evidence"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 }
