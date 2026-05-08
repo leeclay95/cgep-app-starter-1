@@ -1,17 +1,33 @@
 package tls
-import rego.v1
 
-test_deny_s3_no_policy if {
-    mock := {"resource_changes": [{"type": "aws_s3_bucket", "address": "aws_s3_bucket.uploads"}]}
-    res := data.tls.deny with input as mock
-    count(res) > 0
+import rego.v1
+import data.tls.deny
+
+test_deny_bucket_no_policy if {
+    mock_input := {"configuration": {"root_module": {"resources": [
+        {
+            "address": "aws_s3_bucket.unprotected",
+            "type": "aws_s3_bucket",
+            "expressions": {}
+        }
+    ]}}}
+    count(deny) > 0 with input as mock_input
 }
 
-test_allow_s3_tls_enforced if {
-    mock := {"resource_changes": [
-        {"type": "aws_s3_bucket", "address": "aws_s3_bucket.uploads"},
-        {"type": "aws_s3_bucket_policy", "change": {"after": {"bucket": "aws_s3_bucket.uploads", "policy": "{\"Statement\": [{\"Condition\": {\"Bool\": {\"aws:SecureTransport\": \"false\"}}}]}"}}}
-    ]}
-    res := data.tls.deny with input as mock
-    count(res) == 0
+test_allow_bucket_with_policy if {
+    mock_input := {"configuration": {"root_module": {"resources": [
+        {
+            "address": "aws_s3_bucket.protected",
+            "type": "aws_s3_bucket",
+            "expressions": {}
+        },
+        {
+            "address": "aws_s3_bucket_policy.tls",
+            "type": "aws_s3_bucket_policy",
+            "expressions": {
+                "bucket": {"references": ["aws_s3_bucket.protected.id", "aws_s3_bucket.protected"]}
+            }
+        }
+    ]}}}
+    count(deny) == 0 with input as mock_input
 }

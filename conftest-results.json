@@ -1,6 +1,11 @@
 [
 	{
 		"filename": "plan.json",
+		"namespace": "versioning",
+		"successes": 1
+	},
+	{
+		"filename": "plan.json",
 		"namespace": "vpc",
 		"successes": 1
 	},
@@ -12,11 +17,6 @@
 	{
 		"filename": "plan.json",
 		"namespace": "least_privilege",
-		"successes": 1
-	},
-	{
-		"filename": "plan.json",
-		"namespace": "versioning",
 		"successes": 1
 	},
 	{
