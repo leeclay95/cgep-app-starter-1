@@ -76,7 +76,7 @@ jobs:
       - name: Conftest policy gate
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          conftest test plan.json --policy $GITHUB_WORKSPACE/policies --output json > $GITHUB_WORKSPACE/evidence/conftest-results.json || true
+          conftest test plan.json --policy $GITHUB_WORKSPACE/policies --all-namespaces --output json > $GITHUB_WORKSPACE/evidence/conftest-results.json || true
 
           python3 -c "
           import json, sys, os
