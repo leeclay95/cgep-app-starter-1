@@ -80,17 +80,26 @@ jobs:
 
           python3 -c "
           import json, sys, os
-          path = '$GITHUB_WORKSPACE/evidence/conftest-results.json'
+          path = '${{ github.workspace }}/evidence/conftest-results.json'
           if not os.path.exists(path) or os.stat(path).st_size == 0:
-              print('No evidence found'); sys.exit(0)
+              print('ERROR: No conftest results found'); sys.exit(1)
+          
           with open(path) as f:
               data = json.load(f)
-          results = data if isinstance(data, list) else []
-          if results and isinstance(results[0], list):
-              results = [item for sublist in results for item in sublist]
-          fails = sum(len(r.get('failures') or []) for r in results)
-          print(f'conftest failures: {fails}')
-          sys.exit(0 if fails == 0 else 1)
+          
+          # Standardize input to a list
+          results = data if isinstance(data, list) else [data]
+          
+          total_fails = 0
+          for entry in results:
+              if isinstance(entry, list):
+                  for sub in entry:
+                      total_fails += len(sub.get('failures', []) or [])
+              else:
+                  total_fails += len(entry.get('failures', []) or [])
+          
+          print(f'Total Policy Violations Found: {total_fails}')
+          sys.exit(0 if total_fails == 0 else 1)
           "
 
       - name: tfsec scan
