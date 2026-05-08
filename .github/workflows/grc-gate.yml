@@ -65,12 +65,13 @@ jobs:
         with:
           cosign-release: 'v2.2.4'
 
-      - name: Terraform plan
+      - name: Terraform Plan
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
-          terraform init -input=false
-          terraform validate
-          terraform plan -out=tfplan -no-color | tee plan.txt
+          terraform init
+          # Generate the NEW plan binary
+          terraform plan -out=tfplan
+          # Convert the NEW plan binary to JSON in the location Conftest expects
           terraform show -json tfplan > plan.json
 
       - name: Conftest policy gate
