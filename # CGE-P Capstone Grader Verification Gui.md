@@ -110,9 +110,9 @@ aws s3 cp \
 Expected output:
 ```json
 {
-    "run_id": "25603298600",
+    "run_id": "<run_id>",
     "vault": "acme-health-evidence-vault-969958573430",
-    "bundle_key": "runs/25603298600/evidence-25603298600-<sha>.tar.gz",
+    "bundle_key": "runs/<run_id>/evidence-25603298600-<sha>.tar.gz",
     "version_id": "<s3_version_id>",
     "sha256": "<sha256_of_bundle>",
     "commit": "<git_commit_sha>"
