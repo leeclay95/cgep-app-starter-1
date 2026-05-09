@@ -81,4 +81,4 @@ resource "aws_iam_role_policy" "grc_gate_s3_write" {
       }
     ]
   })
-}
+}# AWS OIDC trust configuration for GitHub Actions
