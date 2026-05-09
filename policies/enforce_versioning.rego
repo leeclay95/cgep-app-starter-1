@@ -1,3 +1,11 @@
+# METADATA
+# title: MP.L2-3.8.9 — S3 versioning for PHI overwrite recovery
+# custom:
+#   framework: CMMC-L2
+#   controls:
+#     - "MP.L2-3.8.9"
+#   severity: low
+#   remediation: "Enable an aws_s3_bucket_versioning resource for this bucket."
 package versioning
 
 import rego.v1
