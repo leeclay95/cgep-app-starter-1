@@ -402,36 +402,101 @@ conftest test /tmp/test_bad_vpc.json --policy ./policies --namespace vpc
 
 ---
 
+
 ## Step 7 — Continuous Monitoring Verification
 
+### 7a CloudTrail
+
 ```bash
+# Discover CloudTrail trail name dynamically
+TRAIL_NAME=$(aws cloudtrail describe-trails \
+  --query 'trailList[?IsMultiRegionTrail==`true`].Name' \
+  --output text | head -1)
+
+echo "Trail: $TRAIL_NAME"
+
 # Confirm CloudTrail is logging
 aws cloudtrail get-trail-status \
-  --name cgep-lab-mgmt \
+  --name ${TRAIL_NAME} \
   --query '{IsLogging:IsLogging,LatestDeliveryTime:LatestDeliveryTime}'
-# Expected: IsLogging true
+```
 
+Expected:
+```json
+{
+    "IsLogging": true,
+    "LatestDeliveryTime": "<timestamp>"
+}
+```
+
+```bash
 # Confirm log file validation is enabled
 aws cloudtrail describe-trails \
-  --query 'trailList[?Name==`cgep-lab-mgmt`].LogFileValidationEnabled'
-# Expected: true
+  --query "trailList[?Name==\`${TRAIL_NAME}\`].LogFileValidationEnabled"
+```
 
+Expected:
+```json
+[true]
+```
+
+### 7b Security Hub
+
+```bash
 # Confirm Security Hub standards are subscribed
 aws securityhub get-enabled-standards \
   --query 'StandardsSubscriptions[].StandardsArn'
-# Expected: nist-800-53 and aws-foundational-security-best-practices
+```
 
-# Confirm Config rules are active
+Expected: output contains both of the following:
+```
+arn:aws:securityhub:us-east-1::standards/nist-800-53/v/5.0.0
+arn:aws:securityhub:us-east-1::standards/aws-foundational-security-best-practices/v/1.0.0
+```
+
+### 7c AWS Config Rules
+
+```bash
+# Confirm the two capstone-deployed Config rules are ACTIVE
 aws configservice describe-config-rules \
+  --config-rule-names \
+    cmk-backing-key-rotation-enabled \
+    s3-bucket-ssl-requests-only \
   --query 'ConfigRules[].{Name:ConfigRuleName,State:ConfigRuleState}'
-# Expected: cmk-rotation, s3-ssl-only, vpc-flow-logs — ACTIVE
+```
+
+Expected:
+```json
+[
+    { "Name": "cmk-backing-key-rotation-enabled", "State": "ACTIVE" },
+    { "Name": "s3-bucket-ssl-requests-only", "State": "ACTIVE" }
+]
+```
+
+### 7d VPC Flow Logs
+
+```bash
+# Discover VPC ID dynamically
+VPC_ID=$(cd terraform && terraform output -raw vpc_id)
+
+echo "VPC: $VPC_ID"
 
 # Confirm VPC flow logs are enabled
 aws ec2 describe-flow-logs \
-  --filter "Name=resource-id,Values=vpc-017ff5a2690d07dcb" \
+  --filter "Name=resource-id,Values=${VPC_ID}" \
   --query 'FlowLogs[].{Status:FlowLogStatus,Destination:LogDestinationType}'
-# Expected: ACTIVE, cloud-watch-logs
 ```
+
+Expected:
+```json
+[
+    {
+        "Status": "ACTIVE",
+        "Destination": "cloud-watch-logs"
+    }
+]
+```
+
 
 ---
 
