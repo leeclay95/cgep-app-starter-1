@@ -1,3 +1,11 @@
+# METADATA
+# title: SC.L2-3.13.11 — KMS encryption at rest for PHI buckets and DynamoDB
+# custom:
+#   framework: CMMC-L2
+#   controls:
+#     - "SC.L2-3.13.11"
+#   severity: high
+#   remediation: "Add aws_s3_bucket_server_side_encryption_configuration with sse_algorithm aws:kms and enable server_side_encryption on aws_dynamodb_table."
 package kms
 
 import rego.v1

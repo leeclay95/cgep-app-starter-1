@@ -1,3 +1,11 @@
+# METADATA
+# title: SC.L2-3.13.8 — TLS enforcement on S3 buckets in transit
+# custom:
+#   framework: CMMC-L2
+#   controls:
+#     - "SC.L2-3.13.8"
+#   severity: high
+#   remediation: "Add an aws_s3_bucket_policy with a Deny statement conditioned on aws:SecureTransport false for every S3 bucket."
 package tls
 
 import rego.v1
