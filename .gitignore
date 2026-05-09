@@ -14,3 +14,4 @@ to_delete_markers.json
 Thumbs.dbprogress/
 report.sh
 AUDIT_REPORT.mdevidence/security-hub/
+# managed gitignore
