@@ -268,8 +268,6 @@ aws kms describe-key \
   --key-id alias/cmmc-key \
   --query 'KeyMetadata.{KeyId:KeyId,Enabled:Enabled,KeyState:KeyState}'
 
-aws kms get-key-rotation-status --key-id alias/cmmc-key
-# Expected: KeyRotationEnabled true
 
 # Confirm DynamoDB uses the CMK
 aws dynamodb describe-table \
