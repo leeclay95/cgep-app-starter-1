@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # scripts/policy-gate.sh
 # Usage: policy-gate.sh --workspace <path> [--policy <dir>]
+##
 set -euo pipefail
 
 POLICY_DIR="policies"
