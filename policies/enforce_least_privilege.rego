@@ -1,3 +1,11 @@
+# METADATA
+# title: AC.L2-3.1.5 — Least privilege enforcement on IAM role policies
+# custom:
+#   framework: CMMC-L2
+#   controls:
+#     - "AC.L2-3.1.5"
+#   severity: high
+#   remediation: "Scope IAM actions to only those required. Remove wildcard actions such as dynamodb:* or s3:*."
 package least_privilege
 
 import rego.v1
