@@ -1,0 +1,41 @@
+policies\enforce_kms_test.rego:6:
+data.kms.test_deny_unencrypted_s3: PASS (523.9µs)
+
+policies\enforce_least_privilege_test.rego:39:
+data.least_privilege.test_allow_scoped_actions: PASS (0s)
+
+policies\enforce_kms_test.rego:17:
+data.kms.test_allow_s3_kms: PASS (523.9µs)
+
+policies\enforce_tls_test.rego:17:
+data.tls.test_allow_bucket_with_policy: PASS (2.1151ms)
+
+policies\enforce_versioning_test.rego:4:
+data.versioning.test_deny_no_versioning: PASS (0s)
+
+policies\enforce_least_privilege_test.rego:28:
+data.least_privilege.test_deny_service_wildcard: PASS (1.0768ms)
+policies\enforce_least_privilege_test.rego:6:
+data.least_privilege.test_deny_wildcard_string: PASS (1.596ms)
+policies\enforce_least_privilege_test.rego:17:
+data.least_privilege.test_deny_wildcard_array: PASS (1.596ms)
+
+policies\enforce_versioning_test.rego:10:
+data.versioning.test_allow_versioning: PASS (0s)
+
+policies\enforce_kms_test.rego:38:
+data.kms.test_allow_dynamodb_kms: PASS (0s)
+
+policies\enforce_vpc_test.rego:17:
+data.vpc.test_allow_vpc: PASS (1.0059ms)
+
+policies\enforce_kms_test.rego:51:
+data.kms.test_deny_dynamodb_no_kms: PASS (3.121ms)
+
+policies\enforce_vpc_test.rego:6:
+data.vpc.test_deny_no_vpc: PASS (2.0827ms)
+
+policies\enforce_tls_test.rego:6:
+data.tls.test_deny_bucket_no_policy: PASS (3.7335ms)
+--------------------------------------------------------------------------------
+PASS: 14/14

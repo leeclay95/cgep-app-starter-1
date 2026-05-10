@@ -1,0 +1,30 @@
+[
+    {
+        "Service": "com.amazonaws.us-east-1.s3",
+        "State": "available"
+    },
+    {
+        "Service": "com.amazonaws.us-east-1.dynamodb",
+        "State": "available"
+    },
+    {
+        "Service": "com.amazonaws.us-east-1.kms",
+        "State": "available"
+    },
+    {
+        "Service": "com.amazonaws.us-east-1.sqs",
+        "State": "available"
+    },
+    {
+        "Service": "com.amazonaws.us-east-1.xray",
+        "State": "available"
+    },
+    {
+        "Service": "com.amazonaws.us-east-1.logs",
+        "State": "available"
+    },
+    {
+        "Service": "com.amazonaws.us-east-1.sts",
+        "State": "available"
+    }
+]

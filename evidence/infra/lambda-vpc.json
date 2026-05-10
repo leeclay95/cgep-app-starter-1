@@ -1,0 +1,11 @@
+{
+    "SubnetIds": [
+        "subnet-0fdae49acfb58ad51",
+        "subnet-079ee5a2bfce5fdb9"
+    ],
+    "SecurityGroupIds": [
+        "sg-0ad4e7ae4b311c659"
+    ],
+    "VpcId": "vpc-04cf6ebed140f70b3",
+    "Ipv6AllowedForDualStack": false
+}
