@@ -2,6 +2,7 @@
 # scripts/capture-evidence.sh
 # Usage:
 #   capture-evidence.sh --workspace <path> --run-id <id> --vault <bucket> [--profile <p>]
+##
 
 set -euo pipefail
 
