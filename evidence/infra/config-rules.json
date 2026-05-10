@@ -1,0 +1,10 @@
+[
+    {
+        "Name": "cmk-backing-key-rotation-enabled",
+        "State": "ACTIVE"
+    },
+    {
+        "Name": "s3-bucket-ssl-requests-only",
+        "State": "ACTIVE"
+    }
+]
