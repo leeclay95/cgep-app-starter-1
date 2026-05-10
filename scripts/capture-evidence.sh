@@ -61,16 +61,16 @@ terraform version > "$BUNDLE_DIR/version.txt"
   echo "]"
 } > "$BUNDLE_DIR/manifest.json"
 
-BUNDLE_TGZ="/tmp/evidence-$RUN_ID.tar.gz"
+BUNDLE_TGZ="$WORK/evidence-$RUN_ID.tar.gz"
 ( cd "$WORK" && tar czf "$BUNDLE_TGZ" "bundle-$RUN_ID" )
 
 # --- SHA256 sidecar ---
 SHA256=$($SHASUM "$BUNDLE_TGZ" | awk '{print $1}')
-SHA256_FILE="/tmp/evidence-$RUN_ID.tar.gz.sha256"
+SHA256_FILE="$WORK/evidence-$RUN_ID.tar.gz.sha256"
 echo "$SHA256" > "$SHA256_FILE"
 
 # --- cosign signing (GitHub Actions OIDC) or local stub ---
-SIG_BUNDLE_FILE="/tmp/evidence-$RUN_ID.tar.gz.sig.bundle"
+SIG_BUNDLE_FILE="$WORK/evidence-$RUN_ID.tar.gz.sig.bundle"
 if command -v cosign >/dev/null 2>&1 && [[ -n "${COSIGN_EXPERIMENTAL:-}" ]]; then
   cosign sign-blob \
     --bundle "$SIG_BUNDLE_FILE" \
@@ -83,17 +83,17 @@ KEY="runs/$RUN_ID/evidence-$RUN_ID.tar.gz"
 
 # Upload bundle
 UPLOAD_OUT=$(aws $PROFILE_ARG s3api put-object \
-  --bucket "$VAULT" --key "$KEY" --body "$BUNDLE_TGZ" --output json)
+  --bucket "$VAULT" --key "$KEY" --body "$(cygpath -w "$BUNDLE_TGZ")" --output json)
 VERSION_ID=$(echo "$UPLOAD_OUT" | awk -F'"' '/"VersionId"/{print $4}')
 
 # Upload sidecar files
 aws $PROFILE_ARG s3api put-object \
   --bucket "$VAULT" --key "${KEY}.sha256" \
-  --body "$SHA256_FILE" --output json > /dev/null
+  --body "$(cygpath -w "$SHA256_FILE")" --output json > /dev/null
 
 aws $PROFILE_ARG s3api put-object \
   --bucket "$VAULT" --key "${KEY}.sig.bundle" \
-  --body "$SIG_BUNDLE_FILE" --output json > /dev/null
+  --body "$(cygpath -w "$SIG_BUNDLE_FILE")" --output json > /dev/null
 
 RECEIPT=$(printf '{"run_id":"%s","vault":"%s","key":"%s","version_id":"%s","sha256":"%s","captured_at_utc":"%s"}\n' \
   "$RUN_ID" "$VAULT" "$KEY" "$VERSION_ID" "$SHA256" "$CAPTURED_AT")

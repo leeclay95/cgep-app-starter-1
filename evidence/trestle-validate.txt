@@ -1,0 +1,2 @@
+VALID: Model C:\Users\lee.clayton_darkwolf\grc-capstone\cgep-app-starter-1\oscal\component-definitions\patient-intake-api\component-definition.json passed the Validator to confirm the model passes all registered validation tests.
+VALID: Model C:\Users\lee.clayton_darkwolf\grc-capstone\cgep-app-starter-1\oscal\profiles\cmmc-level-2\profile.json passed the Validator to confirm the model passes all registered validation tests.

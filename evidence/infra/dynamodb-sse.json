@@ -1,0 +1,5 @@
+{
+    "Status": "ENABLED",
+    "SSEType": "KMS",
+    "KMSMasterKeyArn": "arn:aws:kms:us-east-1:969958573430:key/710eab4a-fe07-4401-b166-4774bbf9a558"
+}

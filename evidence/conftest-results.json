@@ -1,0 +1,41 @@
+[
+	{
+		"filename": "terraform/plan.json",
+		"namespace": "kms",
+		"successes": 2
+	},
+	{
+		"filename": "terraform/plan.json",
+		"namespace": "tls",
+		"successes": 1
+	},
+	{
+		"filename": "terraform/plan.json",
+		"namespace": "versioning",
+		"successes": 1
+	},
+	{
+		"filename": "terraform/plan.json",
+		"namespace": "least_privilege",
+		"successes": 0,
+		"failures": [
+			{
+				"msg": "CMMC Violation: Wildcard action found in aws_iam_role_policy.lambda_s3_write",
+				"metadata": {
+					"query": "data.least_privilege.deny"
+				}
+			},
+			{
+				"msg": "CMMC Violation: Wildcard action found in aws_iam_role_policy.vpc_flow_logs",
+				"metadata": {
+					"query": "data.least_privilege.deny"
+				}
+			}
+		]
+	},
+	{
+		"filename": "terraform/plan.json",
+		"namespace": "vpc",
+		"successes": 1
+	}
+]
