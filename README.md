@@ -83,3 +83,16 @@ The repo history contains one red PR blocked by the tfsec gate on a `dynamodb:*`
 
 Primary: CMMC Level 2 (NIST SP 800-171 Rev 2)
 OSCAL catalog source: NIST SP 800-53 Rev 5
+
+## Active Detection & Continuous Monitoring
+
+Beyond point-in-time evidence collection, this repository implements active detection:
+
+| Resource | Control | Description |
+|----------|---------|-------------|
+| `aws_cloudwatch_event_rule.config_noncompliant` | SI-4 | EventBridge fires on any Config `NON_COMPLIANT` event |
+| `aws_cloudwatch_event_target.compliance_sns` | AU-6 | Routes alerts to SNS topic for operator response |
+| `aws_cloudwatch_metric_alarm.config_noncompliant` | SI-4 | CloudWatch alarm after 5min of noncompliance |
+| `aws_sns_topic.compliance_alerts` | AU-6 | Encrypted SNS topic (CMK) for alert delivery |
+| `aws_config_config_rule.*` | CM-6 | Three managed Config rules evaluate continuously |
+| `aws_cloudtrail.main` | AU-2 | Multi-region CloudTrail with log-file validation |
