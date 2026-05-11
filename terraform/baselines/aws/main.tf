@@ -247,3 +247,82 @@ resource "aws_config_config_rule" "vpc_flow_logs" {
   }
   depends_on = [aws_config_configuration_recorder_status.main]
 }
+
+# Active Detection — EventBridge + SNS (SI-4, AU-6)
+# Routes Config NON_COMPLIANT events to SNS for operator alerting.
+
+
+resource "aws_sns_topic" "compliance_alerts" {
+  name              = "acme-health-compliance-alerts"
+  kms_master_key_id = aws_kms_key.cmmc_key.id
+  tags              = { Name = "acme-health-compliance-alerts" }
+}
+
+resource "aws_sns_topic_policy" "compliance_alerts" {
+  arn = aws_sns_topic.compliance_alerts.arn
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "AllowEventBridge"
+      Effect    = "Allow"
+      Principal = { Service = "events.amazonaws.com" }
+      Action    = "sns:Publish"
+      Resource  = aws_sns_topic.compliance_alerts.arn
+    }]
+  })
+}
+
+resource "aws_cloudwatch_event_rule" "config_noncompliant" {
+  name        = "acme-health-config-noncompliant"
+  description = "SI-4/AU-6: Alert on any Config NON_COMPLIANT finding"
+
+  event_pattern = jsonencode({
+    source      = ["aws.config"]
+    detail-type = ["Config Rules Compliance Change"]
+    detail = {
+      newEvaluationResult = {
+        complianceType = ["NON_COMPLIANT"]
+      }
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "compliance_sns" {
+  rule      = aws_cloudwatch_event_rule.config_noncompliant.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.compliance_alerts.arn
+}
+
+resource "aws_cloudwatch_metric_alarm" "config_noncompliant" {
+  alarm_name          = "acme-health-config-noncompliant"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "NonCompliantRules"
+  namespace           = "AWS/Config"
+  period              = 300
+  statistic           = "Maximum"
+  threshold           = 0
+  alarm_description   = "SI-4: One or more Config rules NON_COMPLIANT for >5 min"
+  alarm_actions       = [aws_sns_topic.compliance_alerts.arn]
+  ok_actions          = [aws_sns_topic.compliance_alerts.arn]
+}
+
+# EventBridge rule for CloudTrail API activity monitoring
+resource "aws_cloudwatch_event_rule" "cloudtrail_unauthorized" {
+  name        = "acme-health-unauthorized-api"
+  description = "SI-4: Alert on unauthorized API calls via CloudTrail"
+
+  event_pattern = jsonencode({
+    source      = ["aws.cloudtrail"]
+    detail-type = ["AWS API Call via CloudTrail"]
+    detail = {
+      errorCode = ["AccessDenied", "UnauthorizedOperation"]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "cloudtrail_sns" {
+  rule      = aws_cloudwatch_event_rule.cloudtrail_unauthorized.name
+  target_id = "SendToSNS"
+  arn       = aws_sns_topic.compliance_alerts.arn
+}
