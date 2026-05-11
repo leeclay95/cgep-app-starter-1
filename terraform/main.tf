@@ -144,8 +144,8 @@ resource "aws_iam_role_policy" "vpc_flow_logs" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = ["logs:DescribeLogGroups"]
+        Effect   = "Allow"
+        Action   = ["logs:DescribeLogGroups"]
         Resource = aws_cloudwatch_log_group.vpc_flow_logs.arn
       },
       {
@@ -322,7 +322,7 @@ resource "aws_s3_bucket_policy" "uploads_combined" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [
+        Resource = [
           aws_s3_bucket.uploads.arn,
           "${aws_s3_bucket.uploads.arn}/*",
         ]
@@ -341,11 +341,11 @@ resource "aws_s3_bucket_policy" "logs_combined" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "AllowS3LogDelivery"
-        Effect = "Allow"
+        Sid       = "AllowS3LogDelivery"
+        Effect    = "Allow"
         Principal = { Service = "logging.s3.amazonaws.com" }
-        Action   = ["s3:PutObject"]
-        Resource = "${aws_s3_bucket.logs.arn}/uploads-access-logs/*"
+        Action    = ["s3:PutObject"]
+        Resource  = "${aws_s3_bucket.logs.arn}/uploads-access-logs/*"
         Condition = {
           ArnLike = { "aws:SourceArn" = aws_s3_bucket.uploads.arn }
         }
@@ -355,7 +355,7 @@ resource "aws_s3_bucket_policy" "logs_combined" {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [
+        Resource = [
           aws_s3_bucket.logs.arn,
           "${aws_s3_bucket.logs.arn}/*",
         ]
@@ -569,7 +569,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
   service_name      = "com.amazonaws.${var.aws_region}.dynamodb"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.public.id]
-  tags = { Name = "${local.name_prefix}-vpce-dynamodb" }
+  tags              = { Name = "${local.name_prefix}-vpce-dynamodb" }
 }
 
 # S3 — Gateway endpoint (free, routes via route table, no SG needed)
@@ -578,7 +578,7 @@ resource "aws_vpc_endpoint" "s3" {
   service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = [aws_route_table.public.id]
-  tags = { Name = "${local.name_prefix}-vpce-s3" }
+  tags              = { Name = "${local.name_prefix}-vpce-s3" }
 }
 
 # KMS — Interface endpoint for GenerateDataKey / Decrypt calls
@@ -589,7 +589,7 @@ resource "aws_vpc_endpoint" "kms" {
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
-  tags = { Name = "${local.name_prefix}-vpce-kms" }
+  tags                = { Name = "${local.name_prefix}-vpce-kms" }
 }
 
 # CloudWatch Logs — Interface endpoint for Lambda + VPC flow log delivery
@@ -600,7 +600,7 @@ resource "aws_vpc_endpoint" "logs" {
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
-  tags = { Name = "${local.name_prefix}-vpce-logs" }
+  tags                = { Name = "${local.name_prefix}-vpce-logs" }
 }
 
 # X-Ray — Interface endpoint for Lambda active tracing
@@ -611,7 +611,7 @@ resource "aws_vpc_endpoint" "xray" {
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
-  tags = { Name = "${local.name_prefix}-vpce-xray" }
+  tags                = { Name = "${local.name_prefix}-vpce-xray" }
 }
 
 # SQS — Interface endpoint for DLQ delivery
@@ -622,7 +622,7 @@ resource "aws_vpc_endpoint" "sqs" {
   subnet_ids          = aws_subnet.private[*].id
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
-  tags = { Name = "${local.name_prefix}-vpce-sqs" }
+  tags                = { Name = "${local.name_prefix}-vpce-sqs" }
 }
 
 ######################################################################
@@ -719,15 +719,15 @@ resource "aws_apigatewayv2_stage" "default" {
     # JSON format captures requestId, IP, method, path, status, latency.
     # Adjust fields to match your SIEM ingestion pipeline.
     format = jsonencode({
-      requestId      = "$context.requestId"
-      ip             = "$context.identity.sourceIp"
-      requestTime    = "$context.requestTime"
-      httpMethod     = "$context.httpMethod"
-      routeKey       = "$context.routeKey"
-      status         = "$context.status"
-      protocol       = "$context.protocol"
-      responseLength = "$context.responseLength"
-      errorMessage   = "$context.error.message"
+      requestId        = "$context.requestId"
+      ip               = "$context.identity.sourceIp"
+      requestTime      = "$context.requestTime"
+      httpMethod       = "$context.httpMethod"
+      routeKey         = "$context.routeKey"
+      status           = "$context.status"
+      protocol         = "$context.protocol"
+      responseLength   = "$context.responseLength"
+      errorMessage     = "$context.error.message"
       integrationError = "$context.integrationErrorMessage"
     })
   }

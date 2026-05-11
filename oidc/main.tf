@@ -8,19 +8,15 @@ terraform {
 
 provider "aws" { region = "us-east-1" }
 
-variable "github_org"  { 
+variable "github_org" {
   type    = string
-  default = "leeclay95" 
+  default = "leeclay95"
 }
-variable "github_repo" { 
+variable "github_repo" {
   type    = string
-  default = "cgep-app-starter-1" 
+  default = "cgep-app-starter-1"
 }
 
-variable "framework" {
-  type    = string
-  default = "CMMC-L2"
-}
 
 
 resource "aws_iam_openid_connect_provider" "github" {
@@ -36,9 +32,9 @@ resource "aws_iam_role" "grc_gate" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
-      Action = "sts:AssumeRoleWithWebIdentity"
+      Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
         StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:*" }
@@ -58,7 +54,7 @@ resource "aws_iam_role_policy" "grc_gate_s3_write" {
     Version = "2012-10-17"
     Statement = [
       {
-        
+
         Effect = "Allow"
         Action = [
           "s3:PutObject",
@@ -71,13 +67,13 @@ resource "aws_iam_role_policy" "grc_gate_s3_write" {
         ]
       },
       {
-        
+
         Effect = "Allow"
         Action = [
           "kms:Encrypt",
           "kms:GenerateDataKey"
         ]
-        
+
         Resource = "arn:aws:kms:us-east-1:969958573430:key/401bbf35-f910-4e85-9ac4-323dccde8027"
       }
     ]

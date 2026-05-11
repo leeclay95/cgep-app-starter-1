@@ -15,3 +15,10 @@ Thumbs.dbprogress/
 report.sh
 AUDIT_REPORT.mdevidence/security-hub/
 # managed gitignore
+
+plan.json
+terraform/plan.json
+terraform/plan.txt
+terraform/tfplan
+tfplan
+*.tfplan

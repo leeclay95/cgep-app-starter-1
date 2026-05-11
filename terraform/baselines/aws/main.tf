@@ -61,7 +61,7 @@ resource "aws_kms_alias" "cmmc_key" {
 
 
 resource "aws_s3_bucket" "vault" {
-  bucket = "acme-health-evidence-vault-${data.aws_caller_identity.current.account_id}"
+  bucket              = "acme-health-evidence-vault-${data.aws_caller_identity.current.account_id}"
   object_lock_enabled = true
 }
 
@@ -93,7 +93,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "vault" {
 
 
 resource "aws_s3_bucket" "trail_logs" {
-  bucket = "acme-health-trail-logs-${data.aws_caller_identity.current.account_id}"
+  bucket        = "acme-health-trail-logs-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 }
 
@@ -104,26 +104,26 @@ resource "aws_s3_bucket_policy" "trail_logs_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "AWSCloudTrailAclCheck"
-        Effect = "Allow"
+        Sid       = "AWSCloudTrailAclCheck"
+        Effect    = "Allow"
         Principal = { Service = "cloudtrail.amazonaws.com" }
-        Action   = "s3:GetBucketAcl"
-        Resource = aws_s3_bucket.trail_logs.arn
+        Action    = "s3:GetBucketAcl"
+        Resource  = aws_s3_bucket.trail_logs.arn
       },
       # ADDED: CloudTrail needs this to verify where the bucket is
       {
-        Sid    = "AWSCloudTrailGetLocation"
-        Effect = "Allow"
+        Sid       = "AWSCloudTrailGetLocation"
+        Effect    = "Allow"
         Principal = { Service = "cloudtrail.amazonaws.com" }
-        Action   = "s3:GetBucketLocation"
-        Resource = aws_s3_bucket.trail_logs.arn
+        Action    = "s3:GetBucketLocation"
+        Resource  = aws_s3_bucket.trail_logs.arn
       },
       {
-        Sid    = "AWSCloudTrailWrite"
-        Effect = "Allow"
+        Sid       = "AWSCloudTrailWrite"
+        Effect    = "Allow"
         Principal = { Service = "cloudtrail.amazonaws.com" }
-        Action   = "s3:PutObject"
-        Resource = "${aws_s3_bucket.trail_logs.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+        Action    = "s3:PutObject"
+        Resource  = "${aws_s3_bucket.trail_logs.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
         Condition = {
           StringEquals = { "s3:x-amz-acl" = "bucket-owner-full-control" }
         }
@@ -141,7 +141,7 @@ resource "aws_cloudtrail" "main" {
 }
 
 output "vault_bucket_name" { value = aws_s3_bucket.vault.id }
-output "kms_key_arn"       { value = aws_kms_key.cmmc_key.arn }
+output "kms_key_arn" { value = aws_kms_key.cmmc_key.arn }
 
 resource "aws_securityhub_account" "this" {}
 
@@ -185,7 +185,7 @@ resource "aws_s3_bucket_policy" "config" {
         Resource  = "${aws_s3_bucket.config.arn}/AWSLogs/${data.aws_caller_identity.current.account_id}/Config/*"
         Condition = {
           StringEquals = {
-            "s3:x-amz-acl"    = "bucket-owner-full-control"
+            "s3:x-amz-acl"      = "bucket-owner-full-control"
             "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
           }
         }
